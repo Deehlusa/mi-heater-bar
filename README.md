@@ -1,42 +1,81 @@
-# MiHeaterBar
+<div align="center">
 
-A lightweight macOS menu bar app that controls Xiaomi / Mijia Wi-Fi heaters directly over your local network. You don't need the Mi Home app or a cloud round-trip. It also includes a thermostat mode that tries to save energy.
+# 🔥 MiHeaterBar
 
-- **Local control** over the miIO protocol (UDP 54321, AES-128-CBC), with no Xiaomi account at runtime.
-- **Spec-driven**: it reads the device's [MIoT spec](https://miot-spec.org) and enables only the features your model has, such as power, target temperature, modes, oscillation and the auto-off timer.
-- **Smart Auto**: a hysteresis thermostat that uses the room sensor. It picks the cheapest mode that can still reach your target.
-- **Fail-safe**: while Auto is on, the heater's own off-timer is renewed every 15 min. If the Mac sleeps or the app quits, the heater switches itself off within 60 min.
-- **Energy log**: a monthly CSV log and a 7-day kWh/€ estimate in the menu, plus a weekly Markdown report script.
-- **Small footprint**: SwiftUI with Liquid Glass and a Core Animation background. It measured about 0.01 % CPU with the panel open and 0 % when closed. It never steals focus, because it is a menu bar agent with no Dock icon.
+**Control your Xiaomi Wi-Fi heater from the macOS menu bar. It works locally, uses little energy, and needs no cloud.**
 
-> The UI is currently in Portuguese. Pull requests for localization are welcome.
+[![macOS](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](#-requirements)
+[![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)](https://www.swift.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Local only](https://img.shields.io/badge/cloud-not%20required-2ea44f)](#-privacy--files)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-blueviolet)](#-contributing)
 
-## Supported devices
+<img src="docs/panel-heat.png" width="280" alt="Panel heating in Heat mode">
+&nbsp;&nbsp;
+<img src="docs/panel-fan-dark.png" width="280" alt="Panel in fan mode, dark appearance">
 
-The app works with any heater whose MIoT spec has a `heater` service with an `on` property. The other features are discovered per model.
+</div>
+
+---
+
+## 📑 Contents
+
+- [Features](#-features)
+- [Supported devices](#-supported-devices)
+- [Requirements](#-requirements)
+- [Install](#-install)
+- [Getting the device token](#-getting-the-device-token)
+- [Configure](#%EF%B8%8F-configure)
+- [How Smart Auto works](#-how-smart-auto-works)
+- [Privacy & files](#-privacy--files)
+- [Weekly report](#-weekly-report)
+- [CLI probe](#%EF%B8%8F-cli-probe)
+- [Development](#-development)
+- [Set up with an AI assistant](#-set-up-with-an-ai-assistant)
+- [Safety](#%EF%B8%8F-safety)
+
+## ✨ Features
+
+| | |
+|---|---|
+| 🏠 **Local control** | Talks miIO (UDP 54321, AES-128-CBC) directly to the heater. You don't need a Xiaomi account while the app runs. |
+| 🧩 **Spec-driven** | Reads the device's [MIoT spec](https://miot-spec.org) and enables only the features your model has: power, target, modes, oscillation and off-timer. |
+| 🧠 **Smart Auto** | A hysteresis thermostat that uses the room sensor and picks the cheapest mode that still reaches the target. |
+| 🛡️ **Fail-safe** | While Auto is on, the heater's own off-timer is renewed every 15 min. If the Mac sleeps or the app quits, the heater turns itself off within 60 min. |
+| 📊 **Energy log** | A monthly CSV log, a 7-day kWh / € estimate in the menu, and a weekly Markdown report. |
+| 🪶 **Lightweight** | SwiftUI with Liquid Glass and a Core Animation background. It measured about 0.01 % CPU with the panel open and 0 % when closed. |
+| 🎮 **Never in the way** | Runs as a menu bar agent with no Dock icon. It never takes focus or plays sounds. |
+
+> [!NOTE]
+> The UI is currently in Portuguese 🇧🇷 🇵🇹. Pull requests for localization are welcome.
+
+## 📟 Supported devices
+
+The app works with any heater whose MIoT spec has a `heater` service with an `on` property. Everything else is discovered per model.
 
 | Model | Device | Status |
 |---|---|---|
-| `leshow.heater.nfj3lx` | Xiaomi Smart Tower Heater Lite | Tested on real hardware |
-| `zhimi.heater.mc2a` | Mi Smart Space Heater S | Tested against the emulator only |
-| `zhimi.heater.ma5` | Smartmi heater family | Tested against the emulator only |
+| `leshow.heater.nfj3lx` | Xiaomi Smart Tower Heater Lite | ✅ Tested on real hardware |
+| `zhimi.heater.mc2a` | Mi Smart Space Heater S | 🧪 Tested against the emulator only |
+| `zhimi.heater.ma5` | Smartmi heater family | 🧪 Tested against the emulator only |
 
-Some firmwares accept `set_properties` on `on` and then ignore it. The `nfj3lx` is one of them. When the spec exposes a `toggle` action, the app reads the current state first and calls the toggle action only if the state is different.
+> [!TIP]
+> Some firmwares, including the `nfj3lx`, accept `set_properties` on `on` and then **ignore** it. When the spec exposes a `toggle` action, the app reads the current state first and calls the toggle action only if the state is different.
+>
+> If your model works, or doesn't, please [open an issue](../../issues) with its model string.
 
-If your model works, or doesn't, please open an issue with its model string.
+## 📋 Requirements
 
-## Requirements
+- 🍎 macOS 26 (Tahoe) or later
+- 🛠️ Xcode 26 / Swift 6.2 toolchain
+- 📶 The heater on the same LAN as the Mac. A DHCP reservation for its IP is recommended.
+- 🔑 The device **token** (32 hex characters), see [below](#-getting-the-device-token)
+- 🐍 *Optional:* Python 3 with `cryptography` for the end-to-end tests
 
-- macOS 26 (Tahoe) or later
-- Xcode 26 / Swift 6.2 toolchain
-- The heater on the same LAN as the Mac. A DHCP reservation for its IP is recommended.
-- The device **token** (32 hex characters), see below.
-- Optional: Python 3 with `cryptography` for the end-to-end tests.
-
-## Install
+## 🚀 Install
 
 ```bash
-git clone https://github.com/<you>/mi-heater-bar.git
+git clone https://github.com/Deehlusa/mi-heater-bar.git
 cd mi-heater-bar
 ./build.sh --install          # builds, ad-hoc signs, copies to ~/Applications
 open -g ~/Applications/MiHeaterBar.app
@@ -44,9 +83,10 @@ open -g ~/Applications/MiHeaterBar.app
 
 To use your own bundle identifier, run `BUNDLE_ID=com.yourname.miheaterbar ./build.sh --install`.
 
-On first launch, macOS asks for **Local Network** access. Allow it, or the app cannot reach the heater.
+> [!IMPORTANT]
+> On first launch, macOS asks for **Local Network** access. Allow it, or the app cannot reach the heater. You can change this later in *System Settings → Privacy & Security → Local Network*.
 
-## Getting the device token
+## 🔑 Getting the device token
 
 miIO devices encrypt local traffic with a per-device token. Xiaomi doesn't show it in Mi Home. The usual way to get it is [Xiaomi Cloud Tokens Extractor](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor):
 
@@ -54,57 +94,75 @@ miIO devices encrypt local traffic with a per-device token. Xiaomi doesn't show 
 2. Pick the server region where your device is registered, such as `de`, `cn` or `us`.
 3. Find your heater in the list and copy its **IP** and **token**.
 
-The token changes every time the heater is reset or paired again. If the app suddenly reports timeouts or invalid responses after a reset, get the token again.
+> [!WARNING]
+> The token **changes every time the heater is reset or paired again**. If the app suddenly reports timeouts or invalid responses after a reset, get the token again.
 
-## Configure
+## ⚙️ Configure
 
-Click the menu bar icon and open **Configurações** (Settings), then:
+Click the menu bar icon and open **⚙ Configurações** (Settings):
 
-1. **IP**: the heater's LAN address.
-2. **Token**: the 32-character hex token.
-3. **Auto**: the target temperature for Smart Auto, 20 °C by default.
-4. **Energia**: your electricity price in €/kWh, used only for estimates.
+| Field | What to enter |
+|---|---|
+| **IP** | The heater's LAN address |
+| **Token** | The 32-character hex token |
+| **Auto** | The target temperature for Smart Auto (default 20 °C) |
+| **Energia** | Your electricity price in €/kWh, used only for estimates |
 
 Then click **Salvar e conectar** (Save & connect).
 
-## How Smart Auto works
+## 🧠 How Smart Auto works
 
-Every 30 s the app reads the room temperature and then:
+Every 30 s the app reads the room temperature and decides what to do:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Heat: room ≤ target − 1.5 °C
+    [*] --> Warm: room slightly below target
+    Heat --> Warm: room gets close to target
+    Warm --> Heat: room ≥ 1.5 °C below target
+    Heat --> Paused: room ≥ target + 0.5 °C
+    Warm --> Paused: room ≥ target + 0.5 °C
+    Paused --> Warm: room ≤ target − 0.5 °C (after ≥ 10 min)
+    Paused --> Heat: room ≤ target − 1.5 °C (any time)
+```
 
 | Room vs. target | Action |
 |---|---|
-| ≥ 1.5 °C below | On, in the strong mode (`Heat`) |
-| Slightly below | On, in the gentle mode (`Warm`), which uses less power and avoids overshoot |
-| ≥ target + 0.5 °C | Off (paused) |
-| Paused, back to target − 0.5 °C | On again, after at least 10 min paused, unless the room drops 1.5 °C below the target |
+| ≥ 1.5 °C below | 🔥 On, in the strong mode (`Heat`) |
+| Slightly below | ♨️ On, in the gentle mode (`Warm`), which uses less power and avoids overshoot |
+| ≥ target + 0.5 °C | ⏸️ Off (paused). The panel estimates when heating will resume. |
+| Paused, back to target − 0.5 °C | ▶️ On again after at least 10 min paused, or right away if the room drops 1.5 °C below the target |
 
-Mode switching applies only to models that expose modes named `Heat` and `Warm`. On other models, Auto just switches the heater on and off. Any manual change to power, mode or target turns Auto off. Oscillation doesn't.
+- Mode switching applies only to models that expose modes named `Heat` and `Warm`. On other models, Auto just switches the heater on and off.
+- Any manual change to power, mode or target turns Auto off. Oscillation doesn't.
 
-A resistive heater converts all its power into heat in every mode, so the savings come from heating less, not from a "more efficient" mode. On many models the built-in sensor sits inside the heater and reads in whole degrees, so expect it to read a little high.
+> [!NOTE]
+> A resistive heater converts all its power into heat in every mode, so the savings come from heating less, not from a "more efficient" mode. On many models the built-in sensor sits inside the heater and reads in whole degrees, so expect it to read a little high.
 
-## Files and privacy
+## 🔒 Privacy & files
 
 | What | Where |
 |---|---|
-| Device token | `~/Library/Application Support/MiHeaterBar/token` (file mode `0600`) |
-| Cached MIoT specs | `~/Library/Application Support/MiHeaterBar/spec-<model>.json` |
-| Usage log (CSV) | `~/Library/Application Support/MiHeaterBar/log-YYYY-MM.csv` |
-| IP, Auto target, price | `defaults read <bundle id>` |
+| 🔑 Device token | `~/Library/Application Support/MiHeaterBar/token` (file mode `0600`) |
+| 📦 Cached MIoT specs | `~/Library/Application Support/MiHeaterBar/spec-<model>.json` |
+| 📈 Usage log (CSV) | `~/Library/Application Support/MiHeaterBar/log-YYYY-MM.csv` |
+| ⚙️ IP, Auto target, price | `defaults read <bundle id>` |
 
-- The app makes no telemetry or analytics calls. Its only internet request is a one-time HTTPS download of the MIoT spec for your model from `miot-spec.org`. After that, it uses the local cache.
-- The token is kept in a user-only file rather than the Keychain, because the Keychain asks for your password again after every rebuild of an ad-hoc signed app. The token only grants control of the heater on your LAN, but you should still treat it as a secret.
-- The miIO protocol's encryption is weak, since the key is derived from the token with MD5. Keep IoT devices on a trusted or isolated network.
+- 🚫 **No telemetry or analytics.** The only internet request is a one-time HTTPS download of your model's spec from `miot-spec.org`. After that, the app uses the local cache.
+- 🗝️ The token is kept in a user-only file rather than the Keychain, because the Keychain asks for your password again after every rebuild of an ad-hoc signed app. The token only grants control of the heater on your LAN, but you should still treat it as a secret.
+- 🌐 The miIO protocol's encryption is weak, since the key is derived from the token with MD5. Keep IoT devices on a trusted or isolated network.
 
-## Weekly report
+## 📊 Weekly report
 
 ```bash
-python3 -I report.py                 # last 7 days, default price
+python3 -I report.py                          # last 7 days, default price
 python3 -I report.py --price 0.20 --days 30 --out
 ```
 
 The report covers hours on, estimated kWh and cost, Auto cycles, night-time use and suggestions. Energy figures are estimates based on the logged mode, because the heater doesn't measure its own power draw.
 
-## CLI probe
+## 🖥️ CLI probe
 
 Run the binary outside the `.app` bundle and it works as a probe tool:
 
@@ -115,7 +173,7 @@ swift build
 
 It applies the given settings, then prints the device's capabilities and state as JSON.
 
-## Development
+## 🧪 Development
 
 ```bash
 swift test        # unit tests: protocol codec, spec parsing, Smart Auto, energy
@@ -124,20 +182,26 @@ swift test        # unit tests: protocol codec, spec parsing, Smart Auto, energy
 
 `fake_heater.py` emulates a miIO heater on `127.0.0.1:54321`, including the firmware quirk that ignores `set_properties` on `on`.
 
-| Path | Contents |
-|---|---|
-| `Sources/HeaterKit/` | Protocol (`MiIO`), spec discovery (`MiotSpec`), device API (`Heater`), `SmartAuto`, `EnergyEstimate` |
-| `Sources/MiHeaterBar/` | Menu bar app (SwiftUI), controller, settings, event log |
-| `Tests/HeaterKitTests/` | Unit tests and spec fixtures |
+```text
+Sources/
+├── HeaterKit/      # protocol (MiIO), spec discovery (MiotSpec), device API (Heater), SmartAuto, EnergyEstimate
+└── MiHeaterBar/    # menu bar app (SwiftUI), controller, settings, event log
+Tests/
+└── HeaterKitTests/ # unit tests + MIoT spec fixtures
+```
 
-## Set up with an AI assistant
+### 🤝 Contributing
 
-Paste this prompt into any LLM (ChatGPT, Claude, Gemini, a local model…) to get a step-by-step setup guide.
+Issues and PRs are welcome, especially reports from new heater models, localization and fixes for firmware quirks. Please run `swift test` and `./e2e.sh` before you open a PR.
+
+## 🤖 Set up with an AI assistant
+
+Paste this prompt into any LLM (ChatGPT, Claude, Gemini, a local model…) to get a step-by-step setup guide:
 
 ```text
 You are a patient macOS setup assistant. Help me install and configure MiHeaterBar,
 an open-source macOS menu bar app that controls Xiaomi/Mijia Wi-Fi heaters over the
-local network (miIO protocol). Repository: https://github.com/<you>/mi-heater-bar
+local network (miIO protocol). Repository: https://github.com/Deehlusa/mi-heater-bar
 
 Guide me ONE step at a time and wait for my confirmation or output before continuing.
 Ask first: my macOS version, whether Xcode 26 is installed, and my heater model.
@@ -171,14 +235,15 @@ Safety: remind me not to leave the heater running unattended or overnight.
 Answer in my language.
 ```
 
-## Safety
+## ⚠️ Safety
 
-This is unofficial software that controls a high-power heating appliance. Follow the manufacturer's safety instructions. Don't leave the heater running unattended or while you sleep. The app only controls the heater while your Mac is awake, and you shouldn't rely on it as a safety device.
+> [!CAUTION]
+> This is unofficial software that controls a **high-power heating appliance**. Follow the manufacturer's safety instructions. Don't leave the heater running unattended or while you sleep. The app only controls the heater while your Mac is awake, and you shouldn't rely on it as a safety device.
 
-## Disclaimer
+## ⚖️ Disclaimer
 
 This project is not affiliated with, endorsed by or sponsored by Xiaomi. "Xiaomi", "Mi" and "Mijia" are trademarks of their respective owners.
 
-## License
+## 📄 License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © Deehlusa
