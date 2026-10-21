@@ -1,0 +1,12 @@
+.build/
+build/
+.swiftpm/
+.tokensave/
+__pycache__/
+.DS_Store
+
+# Never commit device credentials or usage logs
+token
+devices.json
+*.csv
+report-*.md
