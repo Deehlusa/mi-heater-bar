@@ -710,7 +710,7 @@ struct AutoModule: View {
 
     private var subtitle: String {
         switch status {
-        case .off: "Holds \(formatTemp(target))° using as little energy as possible"
+        case .off: "Holds \(formatTemp(target))° with minimal energy"
         case .heating(.strong): "Heating fast (Heat)"
         case .heating(.gentle): "Maintaining (Warm)"
         case .paused(let resumeIn?): "Paused · resumes in ~\(max(1, Int((resumeIn / 60).rounded()))) min"

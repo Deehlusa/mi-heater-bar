@@ -12,9 +12,11 @@
 [![Local only](https://img.shields.io/badge/cloud-not%20required-2ea44f)](#-privacidade-e-arquivos)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-blueviolet)](#-como-contribuir)
 
-<img src="docs/panel-heat.png" width="280" alt="Painel aquecendo no modo Heat">
-&nbsp;&nbsp;
-<img src="docs/panel-fan-dark.png" width="280" alt="Painel no modo ventilador, aparência escura">
+<img src="docs/panel-heat.png" width="250" alt="Painel aquecendo no modo Heat">
+&nbsp;
+<img src="docs/panel-auto-dark.png" width="250" alt="Smart Auto mantendo o alvo no modo Warm, aparência escura">
+&nbsp;
+<img src="docs/panel-fan-dark.png" width="250" alt="Painel no modo ventilador, aparência escura">
 
 </div>
 
