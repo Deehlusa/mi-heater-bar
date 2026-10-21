@@ -13,7 +13,7 @@ from datetime import date, datetime, timedelta
 
 MAX_GAP = 120  # seconds; longer gaps between rows are app/Mac downtime, not heater time
 NIGHT_HOURS = range(0, 7)
-MODE_PT = {"Constant Temperature": "Constante", "Heat": "Quente", "Warm": "Morno", "Natural Wind": "Ventilar"}
+MODE_LABEL = {"Constant Temperature": "Constant", "Heat": "Heat", "Warm": "Warm", "Natural Wind": "Fan"}
 DEFAULT_DIR = os.path.expanduser("~/Library/Application Support/MiHeaterBar")
 
 
@@ -35,7 +35,7 @@ def num(s):
 
 
 def fmt(x, digits=1):
-    return f"{x:,.{digits}f}".replace(",", " ").replace(".", ",")
+    return f"{x:,.{digits}f}"
 
 
 def load(paths):
@@ -114,72 +114,72 @@ def report(rows, days, price):
     span_days = max(span_h / 24, 1 / 24)
     month_cost = total_kwh * price / span_days * 30
 
-    out = [f"# Relatório do aquecedor · {rows[0]['ts']:%d/%m %H:%M} → {end:%d/%m %H:%M}", ""]
-    out += [f"> Consumo e custo são **estimativas** a partir do modo registado (Quente 2000 W, Morno 1400 W, "
-            f"Ventilar 12 W; Constante conforme a distância ao alvo). O aparelho não mede consumo. "
-            f"Tempo coberto pelo log: {fmt(span_h)} h.", ""]
+    out = [f"# Heater report · {rows[0]['ts']:%Y-%m-%d %H:%M} → {end:%Y-%m-%d %H:%M}", ""]
+    out += [f"> Energy and cost are **estimates** based on the logged mode (Heat 2000 W, Warm 1400 W, "
+            f"Fan 12 W; Constant depends on the distance to the target). The heater doesn't measure power. "
+            f"Time covered by the log: {fmt(span_h)} h.", ""]
 
-    out += ["## Totais", "", "| Modo | Horas ligado | kWh | € |", "|---|---:|---:|---:|"]
+    out += ["## Totals", "", "| Mode | Hours on | kWh | € |", "|---|---:|---:|---:|"]
     for mode in sorted(on_s, key=on_s.get, reverse=True):
-        out.append(f"| {MODE_PT.get(mode, mode)} | {fmt(on_s[mode] / 3600)} | {fmt(kwh[mode], 2)} | {fmt(kwh[mode] * price, 2)} |")
+        out.append(f"| {MODE_LABEL.get(mode, mode)} | {fmt(on_s[mode] / 3600)} | {fmt(kwh[mode], 2)} | {fmt(kwh[mode] * price, 2)} |")
     out += [f"| **Total** | **{fmt(total_on_h)}** | **{fmt(total_kwh, 2)}** | **{fmt(total_kwh * price, 2)}** |", "",
-            f"Preço: {fmt(price, 3)} €/kWh · custo projetado/mês: **€{fmt(month_cost, 2)}**", ""]
+            f"Price: {fmt(price, 3)} €/kWh · projected cost/month: **€{fmt(month_cost, 2)}**", ""]
 
-    out += ["## Temperatura ambiente", ""]
+    out += ["## Room temperature", ""]
     if temps:
-        out.append(f"- Média {fmt(sum(temps) / len(temps))} °C · mín {fmt(min(temps))} °C · máx {fmt(max(temps))} °C")
-    out.append(f"- Auto ativo {fmt(auto_s / 3600)} h; dentro de alvo ±1 °C: "
+        out.append(f"- Average {fmt(sum(temps) / len(temps))} °C · min {fmt(min(temps))} °C · max {fmt(max(temps))} °C")
+    out.append(f"- Auto active {fmt(auto_s / 3600)} h; within target ±1 °C: "
                + (f"**{fmt(100 * band_s / auto_s, 0)}%**" if auto_s else "—"))
     out.append("")
 
-    out += ["## Ciclos", "", f"- Ligações: {starts}",
-            f"- Duração média ligado: {fmt(sum(ons) / len(ons) / 60, 0)} min" if ons else "- Duração média ligado: —",
-            f"- Duração média em pausa (auto): {fmt(sum(pauses) / len(pauses) / 60, 0)} min ({len(pauses)} pausas)"
-            if pauses else "- Duração média em pausa (auto): —", ""]
+    out += ["## Cycles", "", f"- Starts: {starts}",
+            f"- Average on time: {fmt(sum(ons) / len(ons) / 60, 0)} min" if ons else "- Average on time: —",
+            f"- Average Auto pause: {fmt(sum(pauses) / len(pauses) / 60, 0)} min ({len(pauses)} pauses)"
+            if pauses else "- Average Auto pause: —", ""]
 
-    out += ["## Taxas de aquecimento/arrefecimento", "", "| Estado | °C/h | Horas medidas |", "|---|---:|---:|"]
+    out += ["## Heating/cooling rates", "", "| State | °C/h | Hours measured |", "|---|---:|---:|"]
     for mode, acc in sorted(rate.items()):
         r = per_h(acc)
-        out.append(f"| Ligado · {MODE_PT.get(mode, mode)} | {fmt(r, 2) if r is not None else '—'} | {fmt(acc[1] / 3600)} |")
+        out.append(f"| On · {MODE_LABEL.get(mode, mode)} | {fmt(r, 2) if r is not None else '—'} | {fmt(acc[1] / 3600)} |")
     r = per_h(cool)
-    out += [f"| Desligado | {fmt(r, 2) if r is not None else '—'} | {fmt(cool[1] / 3600)} |", "",
-            "_Sensor inteiro (°C): taxas em janelas curtas são ruidosas._", ""]
+    out += [f"| Off | {fmt(r, 2) if r is not None else '—'} | {fmt(cool[1] / 3600)} |", "",
+            "_Whole-degree sensor (°C): rates over short windows are noisy._", ""]
 
-    out += ["## Intervenções e erros", "", f"- Intervenções manuais: {manual}",
-            f"- Erros de comunicação: {errors} ({fmt(100 * errors / len(rows), 1)}% das linhas)", ""]
+    out += ["## Interventions and errors", "", f"- Manual interventions: {manual}",
+            f"- Communication errors: {errors} ({fmt(100 * errors / len(rows), 1)}% of rows)", ""]
 
     tips = []
     warm = per_h(rate.get("Warm", [0, 0]))
     if warm is not None and warm <= 0.2 and rate["Warm"][1] >= 3600:
-        tips.append(f"Morno quase não aquece a sala ({fmt(warm, 2)} °C/h): **reduzir `boostGap`** (ex.: 1,5 → 1,0) "
-                    "para o auto passar a Quente mais cedo.")
+        tips.append(f"Warm barely heats the room ({fmt(warm, 2)} °C/h): **lower `boostGap`** (e.g. 1.5 → 1.0) "
+                    "so Auto switches to Heat sooner.")
     short = [p for p in pauses if p < 600]
     if len(pauses) >= 3 and len(short) / len(pauses) >= 0.3:
-        tips.append(f"{len(short)} de {len(pauses)} pausas duraram < 10 min: **aumentar `band`** (ex.: 0,5 → 1,0) "
-                    "para ciclos mais longos.")
+        tips.append(f"{len(short)} of {len(pauses)} pauses lasted < 10 min: **raise `band`** (e.g. 0.5 → 1.0) "
+                    "for longer cycles.")
     if total_on_h >= 1 and night_on_s / 3600 >= 0.25 * total_on_h:
-        tips.append(f"{fmt(night_on_s / 3600)} h ligado entre 0h e 7h ({fmt(100 * night_on_s / 3600 / total_on_h, 0)}% do total): "
-                    "considere desligar o auto à noite ou baixar o alvo.")
+        tips.append(f"{fmt(night_on_s / 3600)} h on between 00:00 and 07:00 ({fmt(100 * night_on_s / 3600 / total_on_h, 0)}% of total): "
+                    "consider turning Auto off at night or lowering the target.")
     if rows and errors / len(rows) >= 0.05:
-        tips.append("Muitos erros de comunicação: verifique Wi-Fi/IP fixo do aparelho.")
-    tips.append(f"Custo projetado: **€{fmt(month_cost, 2)}/mês** ao ritmo deste período.")
-    out += ["## Recomendações", ""] + [f"- {t}" for t in tips]
+        tips.append("Many communication errors: check the heater's Wi-Fi and use a fixed IP.")
+    tips.append(f"Projected cost: **€{fmt(month_cost, 2)}/month** at this period's rate.")
+    out += ["## Recommendations", ""] + [f"- {t}" for t in tips]
     return "\n".join(out) + "\n"
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--days", type=float, default=7, help="últimos N dias até ao último registo (default 7)")
+    ap.add_argument("--days", type=float, default=7, help="last N days up to the latest entry (default 7)")
     ap.add_argument("--price", type=float, default=0.14, help="€/kWh (default 0.14)")
-    ap.add_argument("--dir", default=DEFAULT_DIR, help="pasta com log-YYYY-MM.csv")
-    ap.add_argument("--log", help="um único CSV (ignora --dir)")
-    ap.add_argument("--out", nargs="?", const=f"report-{date.today():%Y-%m-%d}.md", help="também grava em ficheiro")
+    ap.add_argument("--dir", default=DEFAULT_DIR, help="folder with log-YYYY-MM.csv")
+    ap.add_argument("--log", help="a single CSV (ignores --dir)")
+    ap.add_argument("--out", nargs="?", const=f"report-{date.today():%Y-%m-%d}.md", help="also write to a file")
     args = ap.parse_args()
 
     paths = [args.log] if args.log else sorted(glob.glob(os.path.join(args.dir, "log-*.csv")))
     rows = load(paths)
     if not rows:
-        sys.exit(f"sem dados em {', '.join(paths) or args.dir}")
+        sys.exit(f"no data in {', '.join(paths) or args.dir}")
     md = report(rows, args.days, args.price)
     sys.stdout.write(md)
     if args.out:

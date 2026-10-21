@@ -34,12 +34,12 @@ public enum HeaterError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidToken: "Token inválido (esperados 32 caracteres hex)."
-        case .timeout: "Sem resposta do aparelho (timeout)."
-        case .unsupportedModel(let model): "Modelo não suportado: \(model)."
-        case .device(let code): "Erro do aparelho (código \(code))."
-        case .specUnavailable: "Spec MIoT indisponível."
-        case .invalidResponse: "Resposta inválida do aparelho."
+        case .invalidToken: "Invalid token (expected 32 hex characters)."
+        case .timeout: "No response from the heater (timeout)."
+        case .unsupportedModel(let model): "Unsupported model: \(model)."
+        case .device(let code): "Heater error (code \(code))."
+        case .specUnavailable: "MIoT spec unavailable."
+        case .invalidResponse: "Invalid response from the heater."
         }
     }
 }

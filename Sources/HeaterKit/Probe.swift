@@ -1,7 +1,7 @@
 import Foundation
 
 public enum Probe {
-    static let usage = "uso: MiHeaterBar <ip> <token> [--power on|off] [--target N] [--mode N] [--osc on|off] [--countdown N]\n"
+    static let usage = "usage: MiHeaterBar <ip> <token> [--power on|off] [--target N] [--mode N] [--osc on|off] [--countdown N]\n"
 
     /// args: <ip> <token> [--power on|off] [--target N] [--mode N] [--osc on|off] [--countdown N]
     /// Applies the requested sets, then prints capabilities and state as JSON.
@@ -58,7 +58,7 @@ public enum Probe {
             FileHandle.standardOutput.write(data + Data("\n".utf8))
             return 0
         } catch {
-            return fail("erro: \(error.localizedDescription)\n", 1)
+            return fail("error: \(error.localizedDescription)\n", 1)
         }
     }
 

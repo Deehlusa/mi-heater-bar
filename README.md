@@ -4,6 +4,8 @@
 
 **Control your Xiaomi Wi-Fi heater from the macOS menu bar. It works locally, uses little energy, and needs no cloud.**
 
+🇬🇧 English · [🇧🇷 Português (Brasil)](README.pt-BR.md)
+
 [![macOS](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](#-requirements)
 [![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)](https://www.swift.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -32,7 +34,6 @@
 - [CLI probe](#%EF%B8%8F-cli-probe)
 - [Development](#-development)
 - [Set up with an AI assistant](#-set-up-with-an-ai-assistant)
-- [Safety](#%EF%B8%8F-safety)
 
 ## ✨ Features
 
@@ -45,9 +46,6 @@
 | 📊 **Energy log** | A monthly CSV log, a 7-day kWh / € estimate in the menu, and a weekly Markdown report. |
 | 🪶 **Lightweight** | SwiftUI with Liquid Glass and a Core Animation background. It measured about 0.01 % CPU with the panel open and 0 % when closed. |
 | 🎮 **Never in the way** | Runs as a menu bar agent with no Dock icon. It never takes focus or plays sounds. |
-
-> [!NOTE]
-> The UI is currently in Portuguese 🇧🇷 🇵🇹. Pull requests for localization are welcome.
 
 ## 📟 Supported devices
 
@@ -99,32 +97,31 @@ miIO devices encrypt local traffic with a per-device token. Xiaomi doesn't show 
 
 ## ⚙️ Configure
 
-Click the menu bar icon and open **⚙ Configurações** (Settings):
+Click the menu bar icon and open **⚙ Settings**:
 
 | Field | What to enter |
 |---|---|
 | **IP** | The heater's LAN address |
 | **Token** | The 32-character hex token |
-| **Auto** | The target temperature for Smart Auto (default 20 °C) |
-| **Energia** | Your electricity price in €/kWh, used only for estimates |
+| **Auto → Target temperature** | The temperature Smart Auto holds (default 20 °C) |
+| **Energy → Price** | Your electricity price in €/kWh, used only for estimates |
 
-Then click **Salvar e conectar** (Save & connect).
+Then click **Save & Connect**.
 
 ## 🧠 How Smart Auto works
 
 Every 30 s the app reads the room temperature and decides what to do:
 
 ```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> Heat: room ≤ target − 1.5 °C
-    [*] --> Warm: room slightly below target
-    Heat --> Warm: room gets close to target
-    Warm --> Heat: room ≥ 1.5 °C below target
-    Heat --> Paused: room ≥ target + 0.5 °C
-    Warm --> Paused: room ≥ target + 0.5 °C
-    Paused --> Warm: room ≤ target − 0.5 °C (after ≥ 10 min)
-    Paused --> Heat: room ≤ target − 1.5 °C (any time)
+flowchart LR
+    S(("Start")) -->|"room 1.5 °C+ below target"| H["Heat"]
+    S -->|"room slightly below target"| W["Warm"]
+    H -->|"room close to target"| W
+    W -->|"room 1.5 °C+ below target"| H
+    H -->|"room ≥ target + 0.5 °C"| P["Paused"]
+    W -->|"room ≥ target + 0.5 °C"| P
+    P -->|"room ≤ target − 0.5 °C, after 10 min"| W
+    P -->|"room 1.5 °C+ below target, any time"| H
 ```
 
 | Room vs. target | Action |
@@ -216,8 +213,8 @@ Steps to cover:
    server region where the device is registered, copy IP + token.
 4. Recommend a DHCP reservation for the heater IP in my router (explain generically;
    do not tell me to change anything else in the router).
-5. In the app: Configurações -> IP, Token, Auto target, price per kWh ->
-   "Salvar e conectar".
+5. In the app: Settings -> IP, Token, Auto target temperature, price per kWh ->
+   "Save & Connect".
 6. Verify with the CLI probe if something fails:
    `swift build && .build/debug/MiHeaterBar <ip> <token>` should print JSON.
 
@@ -234,11 +231,6 @@ this chat. Tell me where to paste them (the extractor, the app) instead.
 Safety: remind me not to leave the heater running unattended or overnight.
 Answer in my language.
 ```
-
-## ⚠️ Safety
-
-> [!CAUTION]
-> This is unofficial software that controls a **high-power heating appliance**. Follow the manufacturer's safety instructions. Don't leave the heater running unattended or while you sleep. The app only controls the heater while your Mac is awake, and you shouldn't rely on it as a safety device.
 
 ## ⚖️ Disclaimer
 

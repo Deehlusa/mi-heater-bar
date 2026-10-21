@@ -11,7 +11,7 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 10) {
-            card("Conexão") {
+            card("Connection") {
                 LabeledContent("IP") {
                     TextField("IP", text: $ip, prompt: Text("192.168.1.50"))
                         .textFieldStyle(.plain)
@@ -19,24 +19,24 @@ struct SettingsView: View {
                 }
                 Divider()
                 LabeledContent("Token") {
-                    SecureField("Token", text: $token, prompt: Text("32 caracteres hex"))
+                    SecureField("Token", text: $token, prompt: Text("32 hex characters"))
                         .textFieldStyle(.plain)
                         .multilineTextAlignment(.trailing)
                 }
                 connectionFooter.font(.caption)
             }
             card("Auto") {
-                stepper("Temperatura alvo", "\(formatTemp(autoTarget)) °C", $autoTarget, 16...26)
+                stepper("Target temperature", "\(formatTemp(autoTarget)) °C", $autoTarget, 16...26)
             }
-            card("Energia") {
-                LabeledContent("Preço (€/kWh)") {
-                    TextField("Preço (€/kWh)", value: $price, format: .number.locale(ptLocale).precision(.fractionLength(2...4)))
+            card("Energy") {
+                LabeledContent("Price (€/kWh)") {
+                    TextField("Price (€/kWh)", value: $price, format: .number.locale(appLocale).precision(.fractionLength(2...4)))
                         .textFieldStyle(.plain)
                         .multilineTextAlignment(.trailing)
                 }
             }
 
-            Button("Salvar e conectar") {
+            Button("Save & Connect") {
                 UserDefaults.standard.set(ip.trimmingCharacters(in: .whitespacesAndNewlines), forKey: "ip")
                 TokenStore.setToken(token.trimmingCharacters(in: .whitespacesAndNewlines))
                 controller.autoTarget = autoTarget
@@ -63,7 +63,7 @@ struct SettingsView: View {
                 .symbolRenderingMode(.multicolor)
                 .foregroundStyle(.secondary)
         } else if let capabilities = controller.capabilities {
-            Text("Modelo: \(capabilities.model)").foregroundStyle(.secondary)
+            Text("Model: \(capabilities.model)").foregroundStyle(.secondary)
         }
     }
 

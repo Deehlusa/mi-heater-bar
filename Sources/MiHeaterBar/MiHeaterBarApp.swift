@@ -16,20 +16,20 @@ struct MiHeaterBarApp: App {
     }
 }
 
-let ptLocale = Locale(identifier: "pt_PT")
+let appLocale = Locale(identifier: "en_US")
 
-/// PT-BR labels for the English mode names in MIoT specs; unknown names fall back to the original.
+/// Short labels for the mode names in MIoT specs; unknown names fall back to the original.
 private let modeNames = [
-    "Constant Temperature": "Constante",
-    "Heat": "Quente",
-    "Warm": "Morno",
-    "Natural Wind": "Ventilar",
-    "Auto": "Automático",
-    "Sleep": "Noturno",
-    "Silent": "Silencioso",
-    "Low": "Baixo",
-    "High": "Alto",
-    "Max": "Máximo",
+    "Constant Temperature": "Constant",
+    "Heat": "Heat",
+    "Warm": "Warm",
+    "Natural Wind": "Fan",
+    "Auto": "Auto",
+    "Sleep": "Sleep",
+    "Silent": "Silent",
+    "Low": "Low",
+    "High": "High",
+    "Max": "Max",
     "Normal": "Normal",
 ]
 
@@ -135,21 +135,21 @@ struct PanelModel {
     }
 
     var heroWord: String {
-        guard connected else { return error == nil ? "Conectando" : "Sem conexão" }
+        guard connected else { return error == nil ? "Connecting" : "Offline" }
         guard isOn else {
-            if case .paused = autoStatus { return "Em pausa" }
-            return "Desligado"
+            if case .paused = autoStatus { return "Paused" }
+            return "Off"
         }
         switch ambience {
-        case .hot: return "Quente"
-        case .cold: return "Frio"
-        default: return "Morno"
+        case .hot: return "Heat"
+        case .cold: return "Cool"
+        default: return "Warm"
         }
     }
 
     var deviceStatus: String {
-        guard connected else { return error == nil ? "Conectando…" : "Aparelho inacessível" }
-        return isOn ? "Ligado" : "Desligado"
+        guard connected else { return error == nil ? "Connecting…" : "Heater unreachable" }
+        return isOn ? "On" : "Off"
     }
 
     var heroSubtitle: String {
@@ -159,9 +159,9 @@ struct PanelModel {
             let name = modeNames[modeName] ?? modeName
             if name != heroWord { parts.append(name) }
         }
-        if let target { parts.append("Alvo \(formatTemp(target))°") }
+        if let target { parts.append("Target \(formatTemp(target))°") }
         if autoOn { parts.append("Auto") }
-        if oscillating == true { parts.append("Oscilando") }
+        if oscillating == true { parts.append("Oscillating") }
         return parts.isEmpty ? " " : parts.joined(separator: " · ")
     }
 }
@@ -185,10 +185,10 @@ struct PanelContent: View {
         VStack(spacing: 10) {
             if showSettings {
                 HStack {
-                    Button { showSettings = false } label: { Label("Voltar", systemImage: "chevron.left") }
+                    Button { showSettings = false } label: { Label("Back", systemImage: "chevron.left") }
                         .buttonStyle(.glass)
                     Spacer()
-                    Text("Configurações").font(.headline).foregroundStyle(.white)
+                    Text("Settings").font(.headline).foregroundStyle(.white)
                 }
                 .padding(.horizontal, 2)
                 SettingsView { showSettings = false }
@@ -524,7 +524,7 @@ struct HeroModule: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("Aquecedor Xiaomi").font(.headline)
+                Text("Xiaomi Heater").font(.headline)
                 Text(status).font(.caption).opacity(0.85).contentTransition(.opacity)
             }
             HStack(alignment: .firstTextBaseline) {
@@ -543,7 +543,7 @@ struct HeroModule: View {
                         .font(.system(size: 44, weight: .thin))
                         .monospacedDigit()
                         .contentTransition(.numericText(value: current ?? 0))
-                    Text("Ambiente").font(.caption2).opacity(0.85)
+                    Text("Room").font(.caption2).opacity(0.85)
                 }
             }
             Text(subtitle)
@@ -571,10 +571,10 @@ struct PowerModule: View {
         HStack(spacing: 12) {
             Button(action: onPower) { Image(systemName: "power") }
                 .buttonStyle(GlassCircleButtonStyle(isActive: isOn, diameter: 48))
-                .help(isOn ? "Desligar" : "Ligar")
-                .accessibilityLabel(isOn ? "Desligar" : "Ligar")
+                .help(isOn ? "Turn Off" : "Turn On")
+                .accessibilityLabel(isOn ? "Turn Off" : "Turn On")
             VStack(alignment: .leading, spacing: 1) {
-                Text(isOn ? "Desligar" : "Ligar").font(.body.weight(.semibold))
+                Text(isOn ? "Turn Off" : "Turn On").font(.body.weight(.semibold))
                 Text(status).font(.caption).foregroundStyle(.secondary).contentTransition(.opacity)
             }
             Spacer(minLength: 0)
@@ -596,14 +596,14 @@ struct StatusModule: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 1) {
-                Text(connected ? "Falha de comunicação" : "Sem conexão").font(.subheadline.weight(.semibold))
+                Text(connected ? "Communication error" : "Offline").font(.subheadline.weight(.semibold))
                 Text(message)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 4)
-            Button("Tentar de novo", action: onRetry)
+            Button("Try Again", action: onRetry)
                 .buttonStyle(.glass)
                 .controlSize(.small)
         }
@@ -625,7 +625,7 @@ struct TargetModule: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Temperatura alvo").font(.subheadline.weight(.semibold))
+                Text("Target temperature").font(.subheadline.weight(.semibold))
                 Spacer()
                 Text(target == nil && draft == nil ? "—" : "\(formatTemp(value)) °C")
                     .font(.title3.weight(.medium))
@@ -639,7 +639,7 @@ struct TargetModule: View {
                 value: Binding(get: { value }, set: { draft = $0 }),
                 in: range,
                 step: step,
-                label: { Text("Temperatura alvo") },
+                label: { Text("Target temperature") },
                 minimumValueLabel: { Text("\(formatTemp(range.lowerBound))°") },
                 maximumValueLabel: { Text("\(formatTemp(range.upperBound))°") },
                 onEditingChanged: { isEditing in
@@ -670,7 +670,7 @@ struct ModeModule: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Modo").font(.subheadline.weight(.semibold))
+            Text("Mode").font(.subheadline.weight(.semibold))
             HStack(alignment: .top, spacing: 4) {
                 ForEach(modes, id: \.value) { mode in
                     let name = modeNames[mode.name] ?? mode.name
@@ -690,10 +690,10 @@ struct ModeModule: View {
                         Image(systemName: "fan.oscillation")
                             .activationSymbolEffect("fan.oscillation", isActive: oscillating && animates && !reduceMotion)
                     }
-                    .buttonStyle(GlassCircleButtonStyle(isActive: oscillating, caption: "Oscilar"))
+                    .buttonStyle(GlassCircleButtonStyle(isActive: oscillating, caption: "Oscillate"))
                     .frame(maxWidth: .infinity)
-                    .help(oscillating ? "Parar oscilação" : "Oscilar")
-                    .accessibilityLabel("Oscilar")
+                    .help(oscillating ? "Stop oscillating" : "Oscillate")
+                    .accessibilityLabel("Oscillate")
                     .accessibilityAddTraits(oscillating ? .isSelected : [])
                 }
             }
@@ -710,12 +710,12 @@ struct AutoModule: View {
 
     private var subtitle: String {
         switch status {
-        case .off: "Mantém a sala em \(formatTemp(target))° gastando o mínimo"
-        case .heating(.strong): "Aquecendo forte (Quente)"
-        case .heating(.gentle): "Mantendo (Morno)"
-        case .paused(let resumeIn?): "Em pausa · volta em ~\(max(1, Int((resumeIn / 60).rounded()))) min"
-        case .paused(nil): "Em pausa"
-        case .noSensor: "Sem leitura de temperatura"
+        case .off: "Holds \(formatTemp(target))° using as little energy as possible"
+        case .heating(.strong): "Heating fast (Heat)"
+        case .heating(.gentle): "Maintaining (Warm)"
+        case .paused(let resumeIn?): "Paused · resumes in ~\(max(1, Int((resumeIn / 60).rounded()))) min"
+        case .paused(nil): "Paused"
+        case .noSensor: "No temperature reading"
         }
     }
 
@@ -727,7 +727,7 @@ struct AutoModule: View {
                 .frame(width: 32, height: 32)
                 .glassEffect(isOn ? .regular.tint(.orange) : .regular, in: .circle)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Auto inteligente · \(formatTemp(target))°").font(.subheadline.weight(.semibold))
+                Text("Smart Auto · \(formatTemp(target))°").font(.subheadline.weight(.semibold))
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -736,7 +736,7 @@ struct AutoModule: View {
                     .contentTransition(.opacity)
             }
             Spacer(minLength: 4)
-            Toggle("Auto inteligente", isOn: Binding(get: { isOn }, set: onChange))
+            Toggle("Smart Auto", isOn: Binding(get: { isOn }, set: onChange))
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
@@ -751,28 +751,28 @@ struct FooterBar: View {
     var onSettings: () -> Void
 
     private func number(_ value: Double, _ digits: Int) -> String {
-        value.formatted(.number.locale(ptLocale).precision(.fractionLength(digits)))
+        value.formatted(.number.locale(appLocale).precision(.fractionLength(digits)))
     }
 
     var body: some View {
         HStack {
             if showsSettingsButton {
                 Button(action: onSettings) {
-                    Label("Configurações", systemImage: "gearshape").labelStyle(.iconOnly)
+                    Label("Settings", systemImage: "gearshape").labelStyle(.iconOnly)
                 }
-                .help("Configurações")
+                .help("Settings")
             }
             Spacer()
             if let summary {
-                Text("7 dias: \(number(summary.hours, 1)) h · \(number(summary.kWh, 1)) kWh · €\(number(summary.cost, 2))")
+                Text("7 days: \(number(summary.hours, 1)) h · \(number(summary.kWh, 1)) kWh · €\(number(summary.cost, 2))")
                     .font(.caption)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                    .help("Estimativa a partir dos modos; o aparelho não mede consumo")
+                    .help("Estimated from the modes; the heater doesn't measure power")
                 Spacer()
             }
-            Button("Sair") { NSApplication.shared.terminate(nil) }
+            Button("Quit") { NSApplication.shared.terminate(nil) }
         }
         .buttonStyle(.borderless)
         .font(.subheadline)

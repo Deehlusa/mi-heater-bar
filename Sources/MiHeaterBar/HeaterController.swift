@@ -65,7 +65,7 @@ final class HeaterController: ObservableObject {
         let ip = UserDefaults.standard.string(forKey: "ip") ?? ""
         let token = TokenStore.token() ?? ""
         guard !ip.isEmpty, !token.isEmpty else {
-            errorMessage = "Configure IP e token"
+            errorMessage = "Set the IP and token"
             return
         }
         do {
@@ -202,7 +202,7 @@ final class HeaterController: ObservableObject {
     @discardableResult
     private func command(_ action: String, source: String, _ work: (Heater) async throws -> Void) async -> Bool {
         guard let heater else {
-            errorMessage = "Não conectado"
+            errorMessage = "Not connected"
             return false
         }
         do {
